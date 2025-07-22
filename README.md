@@ -2,7 +2,7 @@
 
 A simple HTML templating SH solution that runs with just `httpd` and `sh` from `busybox`.
 
-*(Note: Alpine Linux now splits Busybox into multiple packages: apk add busybox-extras)*
+*(Note: Alpine Linux now splits Busybox into multiple packages: `apk add busybox-extras`)*
 
 ## Quickstart
 
