@@ -1,0 +1,60 @@
+#!/bin/sh
+
+server_core_internal_file="${1:-index.html}"
+
+echo "Content-Type: text/html"
+echo ""
+
+server_core_internal_built_script=""
+server_core_internal_unit_separator="$(printf '\x1F')"
+server_core_internal_i=1
+while IFS= read -r server_core_internal_line; do
+  server_core_internal_line=$(echo "$server_core_internal_line" | sed -E 's/<!--%=[ ]*\$([^ ]*)[ ]*%-->/<!--% echo -n "\$\1" %-->/g; s/<!--%=[ ]*(.*[^ ])[ ]*%-->/<!--% echo -n "$(\1)" %-->/g')
+  if [ -n "$(echo "$server_core_internal_line" | grep '^<!--%')" ]; then
+    if [ "$(expr "$server_core_internal_i" % 2)" -eq 0 ]; then
+      server_core_internal_i=$(expr "$server_core_internal_i" + 1)
+    fi
+  fi
+  server_core_internal_parts=$(echo "$server_core_internal_line" | sed "s/<\!--%[ ]*/$server_core_internal_unit_separator/g; s/[ ]*%-->/$server_core_internal_unit_separator/g")
+  server_core_internal_need_newline=0
+
+  if [ -z "$(echo "$server_core_internal_parts" | grep "$server_core_internal_unit_separator")" ]; then
+    server_core_internal_need_newline=1
+  fi
+
+  OLD_IFS="$IFS"
+  IFS="$server_core_internal_unit_separator"
+  for server_core_internal_part in $server_core_internal_parts; do
+    if [ "$(expr "$server_core_internal_i" % 2)" -eq 0 ]; then
+      server_core_internal_built_script=$(printf '%s\n%s\n' "$server_core_internal_built_script" "$server_core_internal_part")
+      server_core_internal_need_newline=0
+    else
+      if [ -n "$(echo "$server_core_internal_part" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//')" ]; then
+        server_core_internal_built_script=$(printf '%s\n%s\n' "$server_core_internal_built_script" "printf '%s' '$server_core_internal_part'")
+        if [ "$server_core_internal_need_newline" -eq 0 ]; then
+          server_core_internal_need_newline=1
+        fi
+      fi
+    fi
+    server_core_internal_i=$(expr "$server_core_internal_i" + 1)
+  done
+
+  if [ -n "$(echo "$server_core_internal_line" | grep '%-->$')" ]; then
+    server_core_internal_i=$(expr "$server_core_internal_i" + 1)
+  fi
+
+  if [ -n "$(echo "$server_core_internal_line" | grep '<!--%$')" ]; then
+    server_core_internal_i=$(expr "$server_core_internal_i" + 1)
+  fi
+
+
+
+  if [ "$server_core_internal_need_newline" -eq 1 ]; then
+    server_core_internal_built_script=$(printf '%s\n%s\n' "$server_core_internal_built_script" "printf '%s\n' ''")
+  fi
+
+  server_core_internal_i=$(expr "$server_core_internal_i" + 1)
+  IFS="$OLD_IFS"
+done < "$server_core_internal_file"
+
+eval "$server_core_internal_built_script"

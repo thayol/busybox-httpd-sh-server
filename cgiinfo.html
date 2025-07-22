@@ -1,0 +1,17 @@
+<!--% cgi_env_vars="SERVER_SOFTWARE SERVER_NAME GATEWAY_INTERFACE SERVER_PROTOCOL SERVER_PORT REQUEST_METHOD PATH_INFO PATH_TRANSLATED SCRIPT_NAME QUERY_STRING REMOTE_HOST REMOTE_ADDR AUTH_TYPE REMOTE_USER REMOTE_IDENT CONTENT_TYPE CONTENT_LENGTH HTTP_ACCEPT HTTP_USER_AGENT" %-->
+<h1>CGI running on <!--%= hostname %--></h1>
+<h2><!--%= uname -a %--></h2>
+<p>
+  <ul>
+    <!--% for var in $(echo "$cgi_env_vars"); do %-->
+      <li><!--%= $var %-->: <!--% eval "echo -n \"\$$var\"" %--></li>
+    <!--% done %-->
+  </ul>
+</p>
+
+<!--% if [ "$QUERY_STRING" = "dump" ]; then %-->
+  <a href="<!--%= $SCRIPT_NAME %-->">Hide env dump</a>
+  <pre><!--% echo -n "$(env | sort)" %--></pre>
+<!--% else %-->
+  <a href="<!--%= $SCRIPT_NAME %-->?dump">Show env dump</a>
+<!--% fi %-->
